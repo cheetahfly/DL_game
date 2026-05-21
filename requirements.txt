@@ -1,0 +1,8 @@
+# 贪吃蛇 DQN 项目
+torch>=2.0.0
+pygame>=2.5.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+
+# 五子棋项目
+# pygame>=2.5.0  # 已在上面
