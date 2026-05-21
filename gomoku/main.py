@@ -11,7 +11,6 @@ import sys
 
 from game import GomokuGame
 from ai import AIPlayer
-from human import HumanPlayer
 from self_play import SelfPlay
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -24,7 +23,6 @@ def mode1_ai_vs_human():
 
     game = GomokuGame(cell_size=CELL_SIZE)
     ai_player = AIPlayer(depth=AI_DEPTH)
-    human_player = HumanPlayer(player=2)
 
     running = True
     clock = pygame.time.Clock()
@@ -43,30 +41,29 @@ def mode1_ai_vs_human():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                break
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_r:
                     game.reset()
-                    human_player.reset()
                     print("\n游戏已重新开始!")
 
-        current_player = game.get_current_player()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if not game.is_over() and game.get_current_player() == 2:
+                    pos = game.get_board_pos(event.pos)
+                    if pos and game.is_valid_move(pos[0], pos[1]):
+                        row, col = pos
+                        game.step(row, col, 2)
+                        print(f"玩家落子: ({row}, {col})")
 
-        if not game.is_over():
-            if current_player == 1:
-                move = ai_player.get_move(game.board)
-                if move:
-                    row, col = move
-                    game.step(row, col, 1)
-                    print(f"AI落子: ({row}, {col})")
-            else:
-                move = human_player.get_move(game)
-                if move:
-                    row, col = move
-                    game.step(row, col, 2)
-                    print(f"玩家落子: ({row}, {col})")
+        if not game.is_over() and game.get_current_player() == 1:
+            move = ai_player.get_move(game.board)
+            if move:
+                row, col = move
+                game.step(row, col, 1)
+                print(f"AI落子: ({row}, {col})")
 
         game.render()
 
@@ -97,11 +94,17 @@ def mode2_self_play_training():
 
 def mode3_watch_policy_net():
     """模式3: 观察训练好的 Policy Network 对弈"""
+    import os
     model_path = "policy_net.pth"
 
     print("=" * 40)
     print("模式3: 观察 Policy Network 对弈")
     print("=" * 40)
+
+    if not os.path.exists(model_path):
+        print(f"模型文件不存在: {model_path}")
+        print("请先运行模式2进行训练")
+        return
 
     trainer = SelfPlay(model_path=model_path)
     print(f"已加载模型: {model_path}")
@@ -117,24 +120,22 @@ def mode3_watch_policy_net():
 
 def mode4_play_vs_policy_net():
     """模式4: 人类 vs 训练好的 Policy Network"""
+    import os
     model_path = "policy_net.pth"
 
     print("=" * 40)
     print("模式4: 人类 vs Policy Network AI")
     print("=" * 40)
 
-    trainer = SelfPlay(model_path=model_path)
-
-    # 检查模型是否存在
-    try:
-        trainer.load(model_path)
-        print(f"已加载模型: {model_path}")
-    except FileNotFoundError:
+    if not os.path.exists(model_path):
         print(f"模型不存在: {model_path}")
         print("请先运行模式2进行训练")
         return
 
-    trainer.play_vs_human(human_player=2)
+    trainer = SelfPlay(model_path=model_path)
+    print(f"已加载模型: {model_path}")
+
+    trainer.play_vs_human(human_player=2, ai_player=1)
 
 
 def main():

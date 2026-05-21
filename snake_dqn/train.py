@@ -28,8 +28,8 @@ def train():
     game = SnakeGame(GRID_SIZE, CELL_SIZE, SPEED, gui=True)
     agent = DQNAgent(
         state_size=11, action_size=4, lr=0.001, gamma=0.99,
-        epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.995,
-        batch_size=BATCH_SIZE, memory_size=10000, target_update=10
+        epsilon=1.0, epsilon_min=0.05, epsilon_decay=0.993,
+        batch_size=BATCH_SIZE, memory_size=50000, target_update=200
     )
 
     scores, losses, avg_scores, recent = [], [], [], []
@@ -48,15 +48,17 @@ def train():
                 agent.memory.push(state, action, reward, next_state, done)
 
                 if len(agent.memory) >= BATCH_SIZE:
-                    batch = agent.memory.sample(BATCH_SIZE)
-                    loss = agent.train(batch)
-                    total_loss += loss
+                    for _ in range(4):
+                        batch = agent.memory.sample(BATCH_SIZE)
+                        loss = agent.train(batch)
+                        total_loss += loss.item()
 
                 state = next_state
                 total_reward += reward
                 steps += 1
                 game.render()
 
+            agent.decay_epsilon()
             scores.append(total_reward)
             recent.append(total_reward)
 

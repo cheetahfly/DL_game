@@ -104,10 +104,12 @@ class DQNAgent:
         if self.train_step % self.target_update == 0:
             self.target_net.load_state_dict(self.policy_net.state_dict())
 
+        return loss.item()
+
+    def decay_epsilon(self):
+        """每个 episode 结束后衰减 epsilon"""
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-
-        return loss.item()
 
     def save(self, path):
         torch.save({

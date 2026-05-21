@@ -93,6 +93,16 @@ class SnakeGame:
             self.done = True
             return self._get_state(), -10, True
 
+        # 距离奖励：靠近食物+1，远离-1
+        old_dist = abs(head[0] - self.food[0]) + abs(head[1] - self.food[1])
+        new_dist = abs(new_head[0] - self.food[0]) + abs(new_head[1] - self.food[1])
+        if new_dist < old_dist:
+            proximity_reward = 1
+        elif new_dist > old_dist:
+            proximity_reward = -1
+        else:
+            proximity_reward = 0
+
         self.snake.insert(0, new_head)
 
         # 吃食物
@@ -102,7 +112,7 @@ class SnakeGame:
             return self._get_state(), 10, False
 
         self.snake.pop()
-        return self._get_state(), 0, False
+        return self._get_state(), proximity_reward, False
 
     def render(self):
         """Pygame渲染"""

@@ -68,7 +68,7 @@ class SelfPlay:
                 continue
 
         winner = game.get_winner()
-        reward = 1 if winner == 1 else (-1 if winner == 2 else 0)
+        reward = 1 if winner == 1 else (-1 if winner == 0 else 0)
         return states, players, reward
 
     def train(self, num_games=100, save_path="policy_net.pth"):
@@ -132,7 +132,7 @@ class SelfPlay:
             else:
                 print(f"结果: {'黑' if winner == 1 else '白'}棋获胜")
 
-    def play_vs_human(self, human_player=2):
+    def play_vs_human(self, human_player=2, ai_player=1):
         """人类 vs 训练好的网络"""
         from game import GomokuGame
         game = GomokuGame()
@@ -156,9 +156,9 @@ class SelfPlay:
                     if pos and game.is_valid_move(pos[0], pos[1]):
                         game.step(pos[0], pos[1], human_player)
 
-            if not game.is_over() and game.current_player != human_player:
+            if not game.is_over() and game.get_winner() == 0 and game.current_player != human_player:
                 row, col = self.get_move(game.board)
-                game.step(row, col, 3 - human_player)
+                game.step(row, col, ai_player)
 
             game.render()
             if game.is_over():
