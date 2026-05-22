@@ -86,20 +86,21 @@ class SnakeGame:
         head = self.snake[0]
         new_head = (head[0] + dx, head[1] + dy)
 
-        # 撞墙或自撞
+        # 撞墙或自撞 - 死亡
         if (new_head[0] < 0 or new_head[0] >= self.grid_size or
             new_head[1] < 0 or new_head[1] >= self.grid_size or
             new_head in self.snake):
             self.done = True
+            # 返回死亡前的状态（有效的状态）
             return self._get_state(), -10, True
 
         # 距离奖励：靠近食物+1，远离-1
         old_dist = abs(head[0] - self.food[0]) + abs(head[1] - self.food[1])
         new_dist = abs(new_head[0] - self.food[0]) + abs(new_head[1] - self.food[1])
         if new_dist < old_dist:
-            proximity_reward = 1
+            proximity_reward = 0.1  # 降低每步奖励，避免震荡
         elif new_dist > old_dist:
-            proximity_reward = -1
+            proximity_reward = -0.1
         else:
             proximity_reward = 0
 
@@ -109,7 +110,7 @@ class SnakeGame:
         if new_head == self.food:
             self.score += 1
             self.food = self._spawn_food()
-            return self._get_state(), 10, False
+            return self._get_state(), 1.0, False  # 吃食物奖励为正
 
         self.snake.pop()
         return self._get_state(), proximity_reward, False

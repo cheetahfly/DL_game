@@ -1,5 +1,5 @@
 """
-DQN智能体类 - 深度Q网络实现
+DQN智能体类 - 深度Q网络实现 (Double DQN)
 """
 
 import torch
@@ -30,7 +30,7 @@ class DQN(nn.Module):
 class ReplayBuffer:
     """经验回放缓冲区"""
 
-    def __init__(self, capacity=10000):
+    def __init__(self, capacity=50000):
         self.buffer = deque(maxlen=capacity)
 
     def push(self, *args):
@@ -44,11 +44,11 @@ class ReplayBuffer:
 
 
 class DQNAgent:
-    """DQN智能体"""
+    """DQN智能体 (Double DQN)"""
 
-    def __init__(self, state_size=11, action_size=4, lr=0.001, gamma=0.99,
-                 epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.995,
-                 batch_size=64, memory_size=10000, target_update=10):
+    def __init__(self, state_size=11, action_size=4, lr=0.0003, gamma=0.99,
+                 epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.9995,
+                 batch_size=64, memory_size=50000, target_update=200):
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
@@ -78,7 +78,7 @@ class DQNAgent:
             return q.argmax().item()
 
     def train(self, batch):
-        """训练一批经验,返回损失值"""
+        """Double DQN训练,返回损失值"""
         states, actions, rewards, next_states, dones = zip(*batch)
 
         states = torch.FloatTensor(np.array(states))
@@ -87,10 +87,16 @@ class DQNAgent:
         next_states = torch.FloatTensor(np.array(next_states))
         dones = torch.FloatTensor(dones)
 
+        # Current Q values
         current_q = self.policy_net(states).gather(1, actions.unsqueeze(1))
 
+        # Double DQN: 使用 policy_net 选择动作，target_net 评估
         with torch.no_grad():
-            max_next_q = self.target_net(next_states).max(1)[0]
+            # 用 policy_net 选择最佳动作
+            best_actions = self.policy_net(next_states).argmax(1, keepdim=True)
+            # 用 target_net 评估该动作的Q值
+            max_next_q = self.target_net(next_states).gather(1, best_actions).squeeze()
+            # 计算 TD target
             target_q = rewards + (1 - dones) * self.gamma * max_next_q
 
         loss = F.mse_loss(current_q.squeeze(), target_q)

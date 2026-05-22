@@ -8,6 +8,10 @@
 
 import pygame
 import sys
+import os
+
+# 将项目根目录添加到 sys.path，确保模块间导入正确
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from game import GomokuGame
 from ai import AIPlayer
